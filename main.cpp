@@ -19,6 +19,7 @@ std::vector<std::pair<int, int>> CalculateRandoms(const int count)
         ys.push_back(i);
     }
 
+    srand(time(0));
     std::random_shuffle(xs.begin(), xs.end());
     std::random_shuffle(ys.begin(), ys.end());
 
@@ -33,27 +34,54 @@ std::vector<std::pair<int, int>> CalculateRandoms(const int count)
 std::vector<Point> ConnectDots(std::vector<std::pair<int, int>> &points)
 {
     std::vector<Point> res;
-    // sort the pairs according to the x value
+    // map each pair -> to 2 vector -> 1 vector of pairs smaller values and 1 vector of pairs bigger values.
+    //  sort the pairs according to the x value
+    //  O(nlogn)
     std::sort(points.begin(), points.end(), [](auto &left, auto &right)
               { return left.first <= right.first; });
 
+    // O(n^2)
     for (auto &point : points)
     {
-        int max_val = 1;
-        // find all the points that are smaller
+        auto it_point = std::find(points.begin(), points.end(), point);
+        int max_val_small = 0;
+        std::vector<Point> bigger;
         std::vector<Point> smaller;
-        for (auto &ready_point : res)
+        int max_val_big = 0;
+        // first find smallest and length until point itself.
+        for (auto p_res : res)
         {
-            if (ready_point.x < point.first && ready_point.y < point.second)
+            if (p_res.x < point.first && p_res.y < point.second)
             {
-                std::cout << "test" <<  ready_point.x << "," << ready_point.y << "\n";
-                std::cout << "test1 " <<  point.first << "," << point.second << "\n";
-                smaller.push_back(ready_point);
-                max_val = std::max(max_val, ready_point.longest_length);
+                // std::cout << "our point" <<  point.first << "," << point.second << " - ";
+                // std::cout << "smaller point: " <<  ready_point.x << "," << ready_point.y << "\n";
+
+                // insert the pair as it is smaller then the point.
+                smaller.push_back(p_res);
+                max_val_small = std::max(max_val_small, p_res.longest_smaller_length);
             }
         }
-        Point p = {point.first, point.second, smaller, max_val + 1};
+        // the bigger values will be created later.
+        Point p = {point.first, point.second, smaller, bigger, max_val_small + 1, max_val_big + 1};
         res.push_back(p);
+    }
+
+    // now after creating all the points, we will sort the points in decreasing order and add the bigger ones
+    std::sort(res.begin(), res.end(), [](Point &left, Point &right)
+              { return left.x >= right.x; });
+
+    // we go from biggest to smallest x values now
+    for (auto it = res.begin(); it != res.end(); it++)
+    {
+        int max_val_big = 0;
+        for (auto prev_it = res.begin(); prev_it != it; prev_it++)
+        {
+            if (prev_it->x > it->x && prev_it->y > it->y)
+            {
+                it->bigger.push_back((*prev_it));
+                it->longest_bigger_length = std::max(it->longest_bigger_length, prev_it->longest_bigger_length + 1);
+            }
+        }
     }
 
     return res;
@@ -68,7 +96,12 @@ int main()
     // }
 
     // step 1 - connect the dots
+    // O(n^2)
     std::vector<Point> connected_points = ConnectDots(input);
+
+    //for clean output
+    std::sort(connected_points.begin(), connected_points.end(), [](auto &left, auto &right)
+              { return left.x < right.x; });
 
     for (auto &item : connected_points)
     {
@@ -76,8 +109,16 @@ int main()
         std::cout << "smaller items: [";
         for (auto &small : item.smaller)
         {
-            std::cout << "(" << item.x << "," << item.y << ") ";
+            std::cout << "(" << small.x << "," << small.y << ") ";
         }
         std::cout << " ]\n";
+        std::cout << "biggest smaller length: " << item.longest_smaller_length << "\n";
+        std::cout << "bigger items: [";
+        for (auto &bigger : item.bigger)
+        {
+            std::cout << "(" << bigger.x << "," << bigger.y << ") ";
+        }
+        std::cout << "]\n";
+        std::cout << "biggest bigger length: " << item.longest_bigger_length << "\n";
     }
 }
