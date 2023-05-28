@@ -8,4 +8,6 @@ struct Point
     std::vector<Point> bigger;
     int longest_smaller_length;
     int longest_bigger_length;
+    Point* biggest_smaller;
+    Point* biggest_bigger;
 };
