@@ -31,9 +31,9 @@ std::vector<std::pair<int, int>> CalculateRandoms(const int count)
     return res;
 }
 
-std::vector<Point> ConnectDots(std::vector<std::pair<int, int>> &points)
+std::vector<std::shared_ptr<Point>> ConnectDots(std::vector<std::pair<int, int>> &points)
 {
-    std::vector<Point> res;
+    std::vector<std::shared_ptr<Point>> res;
     // map each pair -> to 2 vector -> 1 vector of pairs smaller values and 1 vector of pairs bigger values.
     //  sort the pairs according to the x value
     //  O(nlogn)
@@ -43,52 +43,50 @@ std::vector<Point> ConnectDots(std::vector<std::pair<int, int>> &points)
     // O(n^2)
     for (auto &point : points)
     {
-        auto it_point = std::find(points.begin(), points.end(), point);
-        int max_val_small = 0;
-        std::vector<Point> bigger;
-        std::vector<Point> smaller;
-        int max_val_big = 0;
-        // first find smallest and length until point itself.
-        Point *biggest_smaller;
-        for (auto p_res : res)
+        std::vector<std::shared_ptr<Point>> bigger;
+        std::vector<std::shared_ptr<Point>> smaller;
+        std::shared_ptr<Point> curr_point = std::make_shared<Point>(Point(point.first, point.second));
+        curr_point->max_finish_length  = 1;
+        curr_point->max_start_length = 1;
+        // go over prev points and add them if are lower in y also. (was sorted by x so no need for x check)
+        for (auto &p_res : res)
         {
-            if (p_res.x < point.first && p_res.y < point.second)
+            if (p_res->y < curr_point->y)
             {
                 // std::cout << "our point" <<  point.first << "," << point.second << " - ";
                 // std::cout << "smaller point: " <<  ready_point.x << "," << ready_point.y << "\n";
 
                 // insert the pair as it is smaller then the point.
-                smaller.push_back(p_res);
-                if (max_val_small < p_res.longest_smaller_length)
+                curr_point->smaller.push_back(p_res);
+                if (p_res->max_finish_length + 1 > curr_point->max_finish_length)
                 {
-                    biggest_smaller = &p_res;
-                    max_val_small = p_res.longest_smaller_length;
+                    curr_point->longest_finish_point = p_res;
+                    curr_point->max_finish_length = p_res->max_finish_length + 1;
                 }
             }
         }
         // the bigger values will be created later.
-        Point p = {point.first, point.second, smaller, bigger, max_val_small + 1, max_val_big + 1, biggest_smaller};
-        res.push_back(p);
+        res.push_back(curr_point);
     }
 
-    // now after creating all the points, we will sort the points in decreasing order and add the bigger ones
-    std::sort(res.begin(), res.end(), [](Point &left, Point &right)
-              { return left.x >= right.x; });
+    // now after creating all the points, we will go in decreesing order
 
     // we go from biggest to smallest x values now
-    for (auto it = res.begin(); it != res.end(); it++)
+
+    for (auto it = res.rbegin(); it != res.rend(); it++)
     {
-        int max_val_big = 0;
-        for (auto prev_it = res.begin(); prev_it != it; prev_it++)
+        std::shared_ptr<Point> curr = (*it);
+
+        for (auto prev_it = res.rbegin(); prev_it != it; prev_it++)
         {
-            if (prev_it->x > it->x && prev_it->y > it->y)
+            std::shared_ptr<Point> prev = (*prev_it);
+            if (prev->y > curr->y)
             {
-                it->bigger.push_back((*prev_it));
-                if (it->longest_bigger_length < prev_it->longest_bigger_length + 1)
+                curr->bigger.push_back(*prev_it);
+                if (curr->max_start_length < prev->max_start_length + 1)
                 {
-                    Point &p = *prev_it;
-                    it->biggest_bigger = &(p);
-                    it->longest_bigger_length = prev_it->longest_bigger_length + 1;
+                    curr->longest_start_point = prev;
+                    curr->max_start_length = prev->max_start_length + 1;
                 }
             }
         }
@@ -102,35 +100,49 @@ int LargestPathLength(std::vector<Point> &points)
     int max = 1;
     for (Point &p : points)
     {
-        max = std::max(max, p.longest_bigger_length);
+        //    max = std::max(max, p.longest_bigger_length);
     }
 
     return max;
 }
 
-void PrintAll(std::vector<Point> &connected_points)
+void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
 {
-    // for clean output
-    std::sort(connected_points.begin(), connected_points.end(), [](auto &left, auto &right)
-              { return left.x < right.x; });
 
     for (auto &item : connected_points)
     {
-        std::cout << "item is:" << item.x << "," << item.y << "\n";
+        std::cout << "item is:" << item->x << "," << item->y << "\n";
         std::cout << "smaller items: [";
-        for (auto &small : item.smaller)
+        for (auto &small : item->smaller)
         {
-            std::cout << "(" << small.x << "," << small.y << ") ";
+            std::cout << "(" << small->x << "," << small->y << ") ";
         }
         std::cout << " ]\n";
-        std::cout << "largest smaller: " << "(" << (item.biggest_smaller ? item.biggest_smaller->x : -1) << "," << (item.biggest_smaller ? item.biggest_smaller->y : -1)<< ")" << "with value: " << item.longest_smaller_length << "\n";
+
         std::cout << "bigger items: [";
-        for (auto &bigger : item.bigger)
+        for (auto &big : item->bigger)
         {
-            std::cout << "(" << bigger.x << "," << bigger.y << ") ";
+            std::cout << "(" << big->x << "," << big->y << ") ";
         }
-        std::cout << "]\n";
-        std::cout << "largest bigger: " << "(" << (item.biggest_bigger ? item.biggest_bigger->x : -1) << "," << (item.biggest_bigger ? item.biggest_bigger->y : -1) << ")" << "with value: " << item.longest_bigger_length << "\n";
+        std::cout << " ]\n";
+
+        if (!item->smaller.empty())
+        {
+            auto &longest = item->longest_finish_point;
+            std::cout << "max point until now: "
+                      << "(" << longest->x << "," << longest->y << ")"
+                      << "\n";
+        }
+        std::cout << "max finish legth: " << item->max_finish_length << "\n";
+        if (!item->bigger.empty())
+        {
+            auto &longest = item->longest_start_point;
+            std::cout << "max point from here: "
+                      << "(" << longest->x << "," << longest->y << ")"
+                      << "\n";
+        }
+        std::cout << "max start legth: " << item->max_start_length << "\n";
+        std::cout << "\n";
     }
 }
 
@@ -144,9 +156,9 @@ int main()
 
     // step 1 - connect the dots
     // O(n^2)
-    std::vector<Point> connected_points = ConnectDots(input);
+    std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
 
     PrintAll(connected_points);
 
-    int longest_path = LargestPathLength(connected_points);
+    // int longest_path = LargestPathLength(connected_points);
 }
