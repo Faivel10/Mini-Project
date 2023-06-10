@@ -3,8 +3,54 @@
 #include <vector>
 #include <unordered_set>
 #include <algorithm>
+#include <iomanip>
+#include <memory>
+#include <sstream>
+#include <fstream>
 
 #include "main.h"
+
+size_t heaviest_path_weight = 0;
+
+std::vector<std::pair<double, double>> GetPointsFromFile()
+{
+    std::vector<std::pair<double, double>> res;
+    std::string line;
+    std::ifstream file("parsed");
+    if (!file)
+    {
+        std::cerr << "Failed to open the file." << std::endl;
+        throw;
+    }
+
+    while (std::getline(file, line))
+    {
+        std::pair<double, double> pair;
+        std::istringstream stream(line);
+        if (stream >> pair.first >> pair.second)
+        {
+            // std::cout << "Pair: (" << std::setprecision(15) << pair.first << ", " << std::setprecision(15)
+            //           << pair.second << ")" << std::endl;
+            res.push_back(pair);
+        }
+        else
+        {
+            std::cerr << "Failed to parse the line: " << line << std::endl;
+        }
+    }
+
+    return res;
+}
+
+void print_vector_points(std::set<std::shared_ptr<Point>> &points_vector)
+{
+    std::cout << "[";
+    for (auto &point : points_vector)
+    {
+        std::cout << "(" << point->x << "," << point->y << ") ";
+    }
+    std::cout << "]";
+}
 
 // this function may have duplicates, fix
 std::vector<std::pair<int, int>> CalculateRandoms(const int count)
@@ -31,7 +77,13 @@ std::vector<std::pair<int, int>> CalculateRandoms(const int count)
     return res;
 }
 
-std::vector<std::shared_ptr<Point>> ConnectDots(std::vector<std::pair<int, int>> &points)
+// if (p_res->heaviest_finish_weight + 1 > curr_point->heaviest_finish_weight)
+// {
+//     curr_point->heaviest_finish_point = p_res;
+//     curr_point->heaviest_finish_weight = p_res->heaviest_finish_weight + 1;
+// }
+
+std::vector<std::shared_ptr<Point>> ConnectDots(std::vector<std::pair<double, double>> &points)
 {
     std::vector<std::shared_ptr<Point>> res;
     // map each pair -> to 2 vector -> 1 vector of pairs smaller values and 1 vector of pairs bigger values.
@@ -46,119 +98,215 @@ std::vector<std::shared_ptr<Point>> ConnectDots(std::vector<std::pair<int, int>>
         std::vector<std::shared_ptr<Point>> bigger;
         std::vector<std::shared_ptr<Point>> smaller;
         std::shared_ptr<Point> curr_point = std::make_shared<Point>(Point(point.first, point.second));
-        curr_point->max_finish_length  = 1;
-        curr_point->max_start_length = 1;
         // go over prev points and add them if are lower in y also. (was sorted by x so no need for x check)
-        for (auto &p_res : res)
+        // std::cout << "***************\n";
+        // std::cout << "point is :" << curr_point->x << "," << curr_point->y << "\n";
+
+        for (auto it = res.rbegin(); it != res.rend(); it++)
         {
-            if (p_res->y < curr_point->y)
+            auto p_res = *it;
+            // std::cout << "point to check:" << p_res->x << "," << p_res->y << "\n";
+            // std::cout << "points connected: ";
+            // print_vector_points(curr_point->smaller_path_connected);
+            // std::cout << "\n";
+            bool is_point_connected = std::find(curr_point->smaller_path_connected.begin(), curr_point->smaller_path_connected.end(), p_res) != curr_point->smaller_path_connected.end();
+            if (!is_point_connected && p_res->y < curr_point->y)
             {
+                // std::cout << "connecting point!!!\n";
                 // std::cout << "our point" <<  point.first << "," << point.second << " - ";
                 // std::cout << "smaller point: " <<  ready_point.x << "," << ready_point.y << "\n";
 
                 // insert the pair as it is smaller then the point.
                 curr_point->smaller.push_back(p_res);
-                if (p_res->max_finish_length + 1 > curr_point->max_finish_length)
-                {
-                    curr_point->longest_finish_point = p_res;
-                    curr_point->max_finish_length = p_res->max_finish_length + 1;
-                }
+                p_res->bigger.push_back(curr_point);
+                curr_point->smaller_path_connected.insert(p_res);
+                curr_point->smaller_path_connected.insert(p_res->smaller_path_connected.begin(), p_res->smaller_path_connected.end());
             }
         }
         // the bigger values will be created later.
         res.push_back(curr_point);
     }
+    return res;
+}
 
-    // now after creating all the points, we will go in decreesing order
-
-    // we go from biggest to smallest x values now
-
-    for (auto it = res.rbegin(); it != res.rend(); it++)
+void CalculateHeaviestPath(const std::vector<std::shared_ptr<Point>> &points_list)
+{
+    for (auto &point : points_list)
     {
-        std::shared_ptr<Point> curr = (*it);
-
-        for (auto prev_it = res.rbegin(); prev_it != it; prev_it++)
+        // go over prev points and add them if are lower in y also. (was sorted by x so no need for x check)
+        point->heaviest_finish_weight = point->weight;
+        for (auto &smaller_point : point->smaller)
         {
-            std::shared_ptr<Point> prev = (*prev_it);
-            if (prev->y > curr->y)
+            if (smaller_point->heaviest_finish_weight + point->weight > point->heaviest_finish_weight)
             {
-                curr->bigger.push_back(*prev_it);
-                if (curr->max_start_length < prev->max_start_length + 1)
-                {
-                    curr->longest_start_point = prev;
-                    curr->max_start_length = prev->max_start_length + 1;
-                }
+                point->heaviest_finish_weight = smaller_point->heaviest_finish_weight + point->weight;
+                point->heaviest_finish_point = smaller_point;
             }
         }
     }
 
-    return res;
+    for (auto it = points_list.rbegin(); it != points_list.rend(); it++)
+    {
+        auto point = *it;
+        // go over prev points and add them if are lower in y also. (was sorted by x so no need for x check)
+        point->heaviest_start_weight = point->weight;
+        for (auto &bigger_point : point->bigger)
+        {
+            if (bigger_point->heaviest_start_weight + point->weight > point->heaviest_start_weight)
+            {
+                point->heaviest_start_weight = bigger_point->heaviest_start_weight + point->weight;
+                point->heaviest_start_point = bigger_point;
+            }
+        }
+
+        point->heaviest_path_weight = point->heaviest_finish_weight + point->heaviest_start_weight - point->weight;
+        if (point->heaviest_path_weight > heaviest_path_weight)
+        {
+            heaviest_path_weight = point->heaviest_path_weight;
+        }
+    }
 }
 
-int LargestPathLength(std::vector<Point> &points)
+void ClaculateNumberOfPaths(const std::vector<std::shared_ptr<Point>> &points_list)
 {
-    int max = 1;
-    for (Point &p : points)
+
+    for (auto &point : points_list)
     {
-        //    max = std::max(max, p.longest_bigger_length);
+        point->paths_ends_in_point = point->smaller.empty();
+        for (auto &smaller_point : point->smaller)
+        {
+            point->paths_ends_in_point += smaller_point->paths_ends_in_point;
+        }
     }
 
-    return max;
+    for (auto it = points_list.rbegin(); it != points_list.rend(); it++)
+    {
+        auto point = *it;
+        point->paths_starts_in_point = point->bigger.empty();
+        for (auto &bigger_point : point->bigger)
+        {
+            point->paths_starts_in_point += bigger_point->paths_starts_in_point;
+        }
+        point->paths_with_point = point->paths_ends_in_point * point->paths_starts_in_point;
+    }
 }
+
+std::shared_ptr<Point> InceasePointWeight(const std::vector<std::shared_ptr<Point>> &points_list)
+{
+    std::shared_ptr<Point> next_point_to_increase_weight = NULL;
+
+    for (auto &point : points_list)
+    {
+        bool can_incease_point_weight = (point->weight == 1) && (point->heaviest_path_weight < heaviest_path_weight);
+        bool point_have_less_paths = (next_point_to_increase_weight == NULL) || (next_point_to_increase_weight->paths_with_point < point->paths_with_point);
+        if (can_incease_point_weight && point_have_less_paths)
+        {
+            next_point_to_increase_weight = point;
+        }
+    }
+    if (next_point_to_increase_weight != NULL)
+    {
+        next_point_to_increase_weight->weight++;
+    }
+
+    return next_point_to_increase_weight;
+}
+
+// void ClaculateNumberOfPaths(const std::vector<std::shared_ptr<Point>> &points_list)
+// {
+//     for (auto &point : points_list)
+//     {
+//         if (point->weight == 2 || point->heaviest_path_weight == heaviest_path_weight)
+//         {
+//             continue;
+//         }
+
+//     }
+
+// }
 
 void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
 {
 
-    for (auto &item : connected_points)
+    for (auto &point : connected_points)
     {
-        std::cout << "item is:" << item->x << "," << item->y << "\n";
+        std::cout << "point is:" << point->x << "," << point->y << "\n";
+        std::cout << "weight: " << point->weight << "\n";
         std::cout << "smaller items: [";
-        for (auto &small : item->smaller)
+        for (auto &small : point->smaller)
         {
             std::cout << "(" << small->x << "," << small->y << ") ";
         }
         std::cout << " ]\n";
 
         std::cout << "bigger items: [";
-        for (auto &big : item->bigger)
+        for (auto &big : point->bigger)
         {
             std::cout << "(" << big->x << "," << big->y << ") ";
         }
         std::cout << " ]\n";
 
-        if (!item->smaller.empty())
+        if (!point->smaller.empty())
         {
-            auto &longest = item->longest_finish_point;
+            auto &longest = point->heaviest_finish_point;
             std::cout << "max point until now: "
                       << "(" << longest->x << "," << longest->y << ")"
                       << "\n";
         }
-        std::cout << "max finish legth: " << item->max_finish_length << "\n";
-        if (!item->bigger.empty())
+        std::cout << "max finish legth: " << point->heaviest_finish_weight << "\n";
+
+        if (!point->bigger.empty())
         {
-            auto &longest = item->longest_start_point;
+            auto &longest = point->heaviest_start_point;
             std::cout << "max point from here: "
                       << "(" << longest->x << "," << longest->y << ")"
                       << "\n";
         }
-        std::cout << "max start legth: " << item->max_start_length << "\n";
+        std::cout << "max start legth: " << point->heaviest_start_weight << "\n";
+
+        std::cout << "number of paths ends in point: " << point->paths_ends_in_point << "\n";
+        std::cout << "number of paths starts in point: " << point->paths_starts_in_point << "\n";
+        std::cout << "number of paths with point: " << point->paths_with_point << "\n";
+
         std::cout << "\n";
     }
 }
 
 int main()
 {
-    std::vector<std::pair<int, int>> input = CalculateRandoms(5);
-    // for (auto &item : test)
-    // {
-    //     std::cout << item.first << "," << item.second << "\n";
-    // }
+    int num_of_points_weight_increase = 0;
 
+    std::vector<std::pair<double, double>> input = GetPointsFromFile();
     // step 1 - connect the dots
     // O(n^2)
+    // std::cout << "***** ConnectDots...\n";
     std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
 
+    // std::cout << "***** CalculateHeaviestPath...\n";
+    CalculateHeaviestPath(connected_points);
+    // std::cout << "***** ClaculateNumberOfPaths...\n";
+    ClaculateNumberOfPaths(connected_points);
+    // std::cout << "***** PrintAll:\n\n";
     PrintAll(connected_points);
 
-    // int longest_path = LargestPathLength(connected_points);
+    // std::cout << "***** InceasePointWeight...\n";
+    std::shared_ptr<Point> next_point_to_increase_weight = InceasePointWeight(connected_points);
+    while (next_point_to_increase_weight)
+    {
+        num_of_points_weight_increase++;
+        std::cout << "\n*******************************************\n";
+        std::cout << "Point increasing: (" << next_point_to_increase_weight->x << "," << next_point_to_increase_weight->y << ")\n";
+        // std::cout << "***** CalculateHeaviestPath...\n";
+        CalculateHeaviestPath(connected_points);
+        // std::cout << "***** ClaculateNumberOfPaths...\n";
+        ClaculateNumberOfPaths(connected_points);
+        // std::cout << "***** PrintAll:\n\n";
+        //   PrintAll(connected_points);
+        // std::cout << "***** InceasePointWeight...\n";
+        next_point_to_increase_weight = InceasePointWeight(connected_points);
+    }
+
+    std::cout << "\n\n number of points increaset = " << num_of_points_weight_increase << "\n";
+    std::cout << "\n\n heaviest path weight: " << heaviest_path_weight << "\n";
+    
 }
