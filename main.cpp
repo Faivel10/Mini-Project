@@ -272,6 +272,22 @@ void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
     }
 }
 
+void ExportOnlyPointsWithIncreasedWeights(const std::vector<std::shared_ptr<Point>> &points, int sheet_num)
+{
+    std::string file_path = "./output/sheet-" + std::to_string(sheet_num);
+    std::ofstream output_file(file_path, std::ios::app);
+    if (!output_file) {
+        std::cout << "failed opening output file for sheet: " << std::to_string(sheet_num) << "\n";
+        return;
+    }
+    for (auto it = points.begin() ; it != points.end(); it++) {
+        auto point = *(it);
+        if (point->weight == 2) {
+            output_file << point->x << " " << point->y << std::endl;
+        }
+    }
+}
+
 int main()
 {
     for (int i = 1; i <= 20; i++)
@@ -310,11 +326,12 @@ int main()
             // std::cout << "***** InceasePointWeight...\n";
             next_point_to_increase_weight = InceasePointWeight(connected_points);
         }
-
+        
         CalculateHeaviestPath(connected_points);
         std::cout << "\n\n number of points increased = " << num_of_points_weight_increase << "\n";
         std::cout << "\n\n heaviest path weight after: " << heaviest_path_weight << "\n";
 
+        ExportOnlyPointsWithIncreasedWeights(connected_points, i);
     std::cout << "\n!!!!!!!!!! Finished calculating from Sheet number: " << i << "!!!!!!!!!!\n\n";
 
     }
