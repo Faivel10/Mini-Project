@@ -12,14 +12,14 @@
 
 size_t heaviest_path_weight = 0;
 
-std::vector<std::pair<double, double>> GetPointsFromFile()
+std::vector<std::pair<double, double>> GetPointsFromFile(const std::string &file_path)
 {
     std::vector<std::pair<double, double>> res;
     std::string line;
-    std::ifstream file("parsed");
+    std::ifstream file(file_path);
     if (!file)
     {
-        std::cerr << "Failed to open the file." << std::endl;
+        std::cerr << "Failed to open the file " << file_path << std::endl;
         throw;
     }
 
@@ -274,39 +274,48 @@ void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
 
 int main()
 {
-    int num_of_points_weight_increase = 0;
-
-    std::vector<std::pair<double, double>> input = GetPointsFromFile();
-    // step 1 - connect the dots
-    // O(n^2)
-    // std::cout << "***** ConnectDots...\n";
-    std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
-
-    // std::cout << "***** CalculateHeaviestPath...\n";
-    CalculateHeaviestPath(connected_points);
-    // std::cout << "***** ClaculateNumberOfPaths...\n";
-    ClaculateNumberOfPaths(connected_points);
-    // std::cout << "***** PrintAll:\n\n";
-    PrintAll(connected_points);
-
-    // std::cout << "***** InceasePointWeight...\n";
-    std::shared_ptr<Point> next_point_to_increase_weight = InceasePointWeight(connected_points);
-    while (next_point_to_increase_weight)
+    for (int i = 1; i <= 20; i++)
     {
-        num_of_points_weight_increase++;
-        std::cout << "\n*******************************************\n";
-        std::cout << "Point increasing: (" << next_point_to_increase_weight->x << "," << next_point_to_increase_weight->y << ")\n";
+        std::cout << "----------- Starting calculating from Sheet number: " << i << "-----------\n\n";
+        int num_of_points_weight_increase = 0;
+        const std::string file_path = "./parsed/parsed-" + std::to_string(i);
+        std::cout << "file path: " << file_path;
+        std::vector<std::pair<double, double>> input = GetPointsFromFile(file_path);
+        // step 1 - connect the dots
+        // O(n^2)
+        // std::cout << "***** ConnectDots...\n";
+        std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
+
         // std::cout << "***** CalculateHeaviestPath...\n";
         CalculateHeaviestPath(connected_points);
+        std::cout << "\n\n heaviest path weight before: " << heaviest_path_weight << "\n";
         // std::cout << "***** ClaculateNumberOfPaths...\n";
         ClaculateNumberOfPaths(connected_points);
         // std::cout << "***** PrintAll:\n\n";
-        //   PrintAll(connected_points);
-        // std::cout << "***** InceasePointWeight...\n";
-        next_point_to_increase_weight = InceasePointWeight(connected_points);
-    }
+        //  PrintAll(connected_points);
 
-    std::cout << "\n\n number of points increaset = " << num_of_points_weight_increase << "\n";
-    std::cout << "\n\n heaviest path weight: " << heaviest_path_weight << "\n";
-    
+        // std::cout << "***** InceasePointWeight...\n";
+        std::shared_ptr<Point> next_point_to_increase_weight = InceasePointWeight(connected_points);
+        while (next_point_to_increase_weight)
+        {
+            num_of_points_weight_increase++;
+            //     std::cout << "\n*******************************************\n";
+            //   std::cout << "Point increasing: (" << next_point_to_increase_weight->x << "," << next_point_to_increase_weight->y << ")\n";
+            // std::cout << "***** CalculateHeaviestPath...\n";
+            CalculateHeaviestPath(connected_points);
+            // std::cout << "***** ClaculateNumberOfPaths...\n";
+            ClaculateNumberOfPaths(connected_points);
+            // std::cout << "***** PrintAll:\n\n";
+            //   PrintAll(connected_points);
+            // std::cout << "***** InceasePointWeight...\n";
+            next_point_to_increase_weight = InceasePointWeight(connected_points);
+        }
+
+        CalculateHeaviestPath(connected_points);
+        std::cout << "\n\n number of points increased = " << num_of_points_weight_increase << "\n";
+        std::cout << "\n\n heaviest path weight after: " << heaviest_path_weight << "\n";
+
+    std::cout << "\n!!!!!!!!!! Finished calculating from Sheet number: " << i << "!!!!!!!!!!\n\n";
+
+    }
 }
