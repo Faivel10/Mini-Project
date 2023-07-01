@@ -1,9 +1,10 @@
 # Mini-Project
 Mini Project in stochastic optimization.
 ## How To Run
+This program was built using WSL with Ubuntu 22 distro.
 To run the project, you first need to have the following packages installed
 ```bash
-build-essential
+build-essential with g++.
 python3
 pip
 xlrd - version 1.2.0 only - can be installed using:
