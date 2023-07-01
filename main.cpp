@@ -7,6 +7,7 @@
 #include <memory>
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 
 #include "main.h"
 
@@ -272,67 +273,77 @@ void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
     }
 }
 
-void ExportOnlyPointsWithIncreasedWeights(const std::vector<std::shared_ptr<Point>> &points, int sheet_num)
+void ExportOnlyPointsWithIncreasedWeights(const std::vector<std::shared_ptr<Point>> &points, const std::string &sheet_name)
 {
-    std::string file_path = "./output/sheet-" + std::to_string(sheet_num);
-    std::ofstream output_file(file_path, std::ios::app);
-    if (!output_file) {
-        std::cout << "failed opening output file for sheet: " << std::to_string(sheet_num) << "\n";
+    std::string file_path = "./non-csv-output/" + sheet_name;
+    std::ofstream output_file(file_path);
+    if (!output_file)
+    {
+        std::cout << "failed opening output file for sheet: " << sheet_name << "\n";
         return;
     }
-    for (auto it = points.begin() ; it != points.end(); it++) {
+    int i = 0;
+    for (auto it = points.begin(); it != points.end(); it++)
+    {
         auto point = *(it);
-        if (point->weight == 2) {
+        if (point->weight == 2)
+        {
             output_file << point->x << " " << point->y << std::endl;
+            i++;
         }
     }
+        std::cout << "exporting points : " << std::to_string(i);
 }
 
 int main()
 {
-    for (int i = 1; i <= 20; i++)
+    std::vector<std::string> sheet_names;
+    for (auto const &dir_entry : std::filesystem::directory_iterator{"./parsed/"})
     {
-        std::cout << "----------- Starting calculating from Sheet number: " << i << "-----------\n\n";
-        int num_of_points_weight_increase = 0;
-        const std::string file_path = "./parsed/parsed-" + std::to_string(i);
-        std::cout << "file path: " << file_path;
-        std::vector<std::pair<double, double>> input = GetPointsFromFile(file_path);
-        // step 1 - connect the dots
-        // O(n^2)
-        // std::cout << "***** ConnectDots...\n";
-        std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
-
-        // std::cout << "***** CalculateHeaviestPath...\n";
-        CalculateHeaviestPath(connected_points);
-        std::cout << "\n\n heaviest path weight before: " << heaviest_path_weight << "\n";
-        // std::cout << "***** ClaculateNumberOfPaths...\n";
-        ClaculateNumberOfPaths(connected_points);
-        // std::cout << "***** PrintAll:\n\n";
-        //  PrintAll(connected_points);
-
-        // std::cout << "***** InceasePointWeight...\n";
-        std::shared_ptr<Point> next_point_to_increase_weight = InceasePointWeight(connected_points);
-        while (next_point_to_increase_weight)
+        if (dir_entry.is_regular_file())
         {
-            num_of_points_weight_increase++;
-            //     std::cout << "\n*******************************************\n";
-            //   std::cout << "Point increasing: (" << next_point_to_increase_weight->x << "," << next_point_to_increase_weight->y << ")\n";
+            const std::filesystem::path file_path = dir_entry.path();
+            std::cout << "----------- Starting calculating for Sheet: " << file_path.stem() << "-----------\n\n";
+            int num_of_points_weight_increase = 0;
+            std::cout << "file path: " << file_path;
+            std::vector<std::pair<double, double>> input = GetPointsFromFile(file_path);
+            // step 1 - connect the dots
+            // O(n^2)
+            // std::cout << "***** ConnectDots...\n";
+            std::vector<std::shared_ptr<Point>> connected_points = ConnectDots(input);
+
             // std::cout << "***** CalculateHeaviestPath...\n";
             CalculateHeaviestPath(connected_points);
+            std::cout << "\n\n heaviest path weight before: " << heaviest_path_weight << "\n";
             // std::cout << "***** ClaculateNumberOfPaths...\n";
             ClaculateNumberOfPaths(connected_points);
             // std::cout << "***** PrintAll:\n\n";
-            //   PrintAll(connected_points);
+            //  PrintAll(connected_points);
+
             // std::cout << "***** InceasePointWeight...\n";
-            next_point_to_increase_weight = InceasePointWeight(connected_points);
+            std::shared_ptr<Point> next_point_to_increase_weight = InceasePointWeight(connected_points);
+            while (next_point_to_increase_weight)
+            {
+                num_of_points_weight_increase++;
+                //     std::cout << "\n*******************************************\n";
+                //   std::cout << "Point increasing: (" << next_point_to_increase_weight->x << "," << next_point_to_increase_weight->y << ")\n";
+                // std::cout << "***** CalculateHeaviestPath...\n";
+                CalculateHeaviestPath(connected_points);
+                // std::cout << "***** ClaculateNumberOfPaths...\n";
+                ClaculateNumberOfPaths(connected_points);
+                // std::cout << "***** PrintAll:\n\n";
+                //   PrintAll(connected_points);
+                // std::cout << "***** InceasePointWeight...\n";
+                next_point_to_increase_weight = InceasePointWeight(connected_points);
+            }
+
+            CalculateHeaviestPath(connected_points);
+            std::cout << "\n\n number of points increased = " << num_of_points_weight_increase << "\n";
+            std::cout << "\n\n heaviest path weight after: " << heaviest_path_weight << "\n";
+
+            ExportOnlyPointsWithIncreasedWeights(connected_points, file_path.stem());
+            std::cout << "\n!!!!!!!!!! Finished exporting sheet: " << file_path.filename() << " to csv !!!!!!!!!!\n\n";
+            heaviest_path_weight = 0;
         }
-        
-        CalculateHeaviestPath(connected_points);
-        std::cout << "\n\n number of points increased = " << num_of_points_weight_increase << "\n";
-        std::cout << "\n\n heaviest path weight after: " << heaviest_path_weight << "\n";
-
-        ExportOnlyPointsWithIncreasedWeights(connected_points, i);
-    std::cout << "\n!!!!!!!!!! Finished calculating from Sheet number: " << i << "!!!!!!!!!!\n\n";
-
     }
 }

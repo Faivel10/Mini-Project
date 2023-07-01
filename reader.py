@@ -11,13 +11,13 @@ for name in sheet_names:
     worksheet = workbook.sheet_by_name(name)
     pairs = []
     non_emptycells=[i for i,x in enumerate(worksheet.col(0)) if x.ctype != 0]
-    print("Thre are : ", len(non_emptycells), "points in this sheet")
+    print("There are : ", len(non_emptycells) -1, "points in this sheet")
 
-    for i in range(1, len(non_emptycells)):
+    for i in range(1, len(non_emptycells)):#remove titles
         pairs.append((worksheet.cell_value(i, 0), worksheet.cell_value(i, 1)))
 
     #export for the main program to read.
-    file_path = "parsed/parsed-" + str(counter)
+    file_path = "parsed/parsed-" + name
     with open(file_path, "w") as file:
         for pair in pairs:
             pair_str = [str(element) for element in pair]
