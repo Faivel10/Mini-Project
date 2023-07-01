@@ -7,7 +7,9 @@ To run the project, you first need to have the following packages installed
 build-essential with g++.
 python3
 pip
-xlrd - version 1.2.0 only - can be installed using:
+xlrd - version 1.2.0 only
+```
+xlrd version 1.2.0 can be installed by running:
 ```bash
 pip install xlrd==1.2.0
 ```
