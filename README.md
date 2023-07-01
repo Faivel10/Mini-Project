@@ -6,7 +6,7 @@ To run the project, you first need to have the following packages installed
 build-essential
 python3
 pip
-xlrd - can be installed using pip
+xlrd - version 1.2.0 only - can be installed using `pip install xlrd==1.2.0` 
 ```
 After installing the required packages, just run:
 ```bash
