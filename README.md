@@ -6,20 +6,19 @@ To run the project, you first need to have the following packages installed
 build-essential
 python3
 pip
-xlrd - version 1.2.0 only - can be installed using `pip install xlrd==1.2.0` 
+xlrd - version 1.2.0 only - can be installed using: ```bash pip install xlrd==1.2.0 ```
 ```
 After installing the required packages, just run:
 ```bash
 ./run.sh
 ```
 ## How It Works:
-* reader.py file is responsible to read the xlxs input file and parse the points from it to a text file.
-* After that that, main.cpp takes the parsed file, and does all the calculations.
-* Main then outputs the points in a parsed manner.
-* Writer.py will convert convert the parsed points to csv.
+* reader.py file is responsible to read the xlxs input file and parse the points from it to a text file that the main program can read.
+* After that that, main.cpp takes the parsed file, calculates the heaviest paths and the points that will have their weights increased on all the parsed files.
+* Main then outputs the points that will have their weights increased for each sheet to a non-csv text file.
+* Writer.py will convert the parsed points to csv file.
 
 ## Where is the output
-When done, the output will be in output-csv folder with each output file named by the location of the sheet in the original file 
-- from 1 to 20.
+When done, the output will be in output folder with each output file named with a "parsed-" prefix and then the original sheet title.
 
   
