@@ -199,7 +199,7 @@ std::shared_ptr<Point> InceasePointWeight(const std::vector<std::shared_ptr<Poin
     for (auto &point : points_list)
     {
         bool can_incease_point_weight = (point->weight == 1) && (point->heaviest_path_weight < heaviest_path_weight);
-        bool point_have_less_paths = (next_point_to_increase_weight == NULL) || (next_point_to_increase_weight->paths_with_point < point->paths_with_point);
+        bool point_have_less_paths = (next_point_to_increase_weight == NULL) || (next_point_to_increase_weight->paths_with_point > point->paths_with_point);
         if (can_incease_point_weight && point_have_less_paths)
         {
             next_point_to_increase_weight = point;
