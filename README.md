@@ -1,7 +1,7 @@
 # Mini-Project
 Mini Project in stochastic optimization.
 ## The problem:
-We have passengers boarding on a place. Each passenger has x and y values - where x is it's location in the line and y is it's seat.
+We have passengers boarding on a plane. Each passenger has x and y values - where x is it's location in the line and y is it's seat.
 In addition, each passenger has a weight - that means how low he is - everyone start at value 1.
 We also define the slowest line as the longest line with the most weights in it.
 Our mission is to check how many passenger weights can be increased to 2, while not surpassing the slowest line existing before the added weights.
@@ -32,5 +32,6 @@ After installing the required packages, just run:
 When done, the output will be in output folder with each output file named with a "parsed-" prefix and then the original sheet title.
 
 ## Testing:
-You can use add points to the plot.py file, and then you will get a plot with connected points that are bigger than one another, and can calculate manually where weight can be increased.
+You can use add points to the plot.py file, which will show you a plot of the lines, while increasing lines only are connected.
+You can then find manually the slowest-heviest line, the points where weight can be increased and compare it to the program output. 
   
