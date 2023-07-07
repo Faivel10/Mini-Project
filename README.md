@@ -13,6 +13,7 @@ build-essential with g++.
 python3
 pip
 xlrd - version 1.2.0 only
+matplotlib
 ```
 xlrd version 1.2.0 can be installed by running:
 ```bash
