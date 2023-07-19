@@ -13,6 +13,7 @@ build-essential with g++.
 python3
 pip
 xlrd - version 1.2.0 only
+openpyxl
 matplotlib
 ```
 xlrd version 1.2.0 can be installed by running:
@@ -27,10 +28,11 @@ After installing the required packages, just run:
 * reader.py file is responsible to read the xlsx input file and parse the points from it to a text file that the main program can read.
 * main.cpp takes the parsed file, calculates the heaviest paths and the points that will have their weights increased on all the parsed files.
 * Main then outputs the points that will have their weights increased for each sheet to a parsed text file.
-* Writer.py will convert the parsed points to csv file.
+* Writer.py will convert the parsed points to the required output file - will be named faivel_dragatsky.xlsx.
 
 ## Where is the output
-When done, the output will be in output folder with each output file named with a "parsed-" prefix and then the original sheet title.
+When done, the parsed output will be in output folder with each output file named with a "parsed-" prefix and then the original sheet title.
+The final output is named faivel_dragatsky in the main folder.
 
 ## Testing:
 You can use add points to the plot.py file, which will show you a plot of the lines, while increasing lines only are connected.
