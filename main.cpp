@@ -275,7 +275,7 @@ void PrintAll(std::vector<std::shared_ptr<Point>> &connected_points)
 
 void ExportOnlyPointsWithIncreasedWeights(const std::vector<std::shared_ptr<Point>> &points, const std::string &sheet_name)
 {
-    std::string file_path = "./non-csv-output/" + sheet_name;
+    std::string file_path = "./parsed-output/" + sheet_name;
     std::ofstream output_file(file_path);
     if (!output_file)
     {
@@ -288,7 +288,8 @@ void ExportOnlyPointsWithIncreasedWeights(const std::vector<std::shared_ptr<Poin
         auto point = *(it);
         if (point->weight == 2)
         {
-            output_file << point->x << " " << point->y << std::endl;
+            
+            output_file << std::fixed << std::setprecision(20) << point->x << " " << point->y << std::endl;
             i++;
         }
     }
@@ -342,7 +343,7 @@ int main()
             std::cout << "\n\n heaviest path weight after: " << heaviest_path_weight << "\n";
 
             ExportOnlyPointsWithIncreasedWeights(connected_points, file_path.stem());
-            std::cout << "\n!!!!!!!!!! Finished exporting sheet: " << file_path.filename() << " to csv !!!!!!!!!!\n\n";
+            std::cout << "\n!!!!!!!!!! Finished exporting data: " << file_path.filename() << "\n";
             heaviest_path_weight = 0;
         }
     }

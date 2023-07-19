@@ -26,7 +26,7 @@ After installing the required packages, just run:
 ## How It Works:
 * reader.py file is responsible to read the xlsx input file and parse the points from it to a text file that the main program can read.
 * main.cpp takes the parsed file, calculates the heaviest paths and the points that will have their weights increased on all the parsed files.
-* Main then outputs the points that will have their weights increased for each sheet to a non-csv text file.
+* Main then outputs the points that will have their weights increased for each sheet to a parsed text file.
 * Writer.py will convert the parsed points to csv file.
 
 ## Where is the output
