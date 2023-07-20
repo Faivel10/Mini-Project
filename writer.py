@@ -13,6 +13,7 @@ def check_and_update_excel(file_path, sheet_name, workbook):
         for i, row_cells in enumerate(sheet.iter_rows()):
             if i == 0:
                 sheet['C' + str(i + 1)] = 'W'
+                continue
             sheet['C' + str(i + 1)] = 1
 
         for line in lines:
