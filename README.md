@@ -20,7 +20,7 @@ xlrd version 1.2.0 can be installed by running:
 ```bash
 pip install xlrd==1.2.0
 ```
-After installing the required packages, just run:
+After installing the required packages, enter the code folder and run:
 ```bash
 ./run.sh
 ```
@@ -31,7 +31,7 @@ After installing the required packages, just run:
 * Writer.py will convert the parsed points to the required output file - will be named faivel_dragatsky.xlsx.
 
 ## Where is the output
-When done, the parsed output will be in output folder with each output file named with a "parsed-" prefix and then the original sheet title.
+When done, the parsed output will be in output folder with each output file in the code folder named with a "parsed-" prefix and then the original sheet title.
 The final output is named faivel_dragatsky in the main folder.
 
 ## Testing:
